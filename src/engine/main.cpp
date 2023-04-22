@@ -2,6 +2,7 @@
 #include <vendor/glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "engine/logger.h"
+#include "engine/window.h"
 
 int main() {
 	std::cout << "\n+++[ Gyurchine started ]+++\n\n";
@@ -9,11 +10,17 @@ int main() {
 	Logger& logger = Logger::getInstance();
 	logger.setLogLevel(Logger::DETAIL);
 
+	Window window(1920,1080,"Gyurchine");
+
+/*
 	glfwInit();
 	GLFWwindow* w = glfwCreateWindow(1920,1080, "Gyurchine", NULL, NULL);
 	glfwMakeContextCurrent(w);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-	float t[] =
+*/
+
+/*
+float t[] =
 	{
 		-.5f, -.5f, 0.f,
 		0.f, .5f, 0.f,
@@ -27,19 +34,23 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3,
 		 (void*)0);
 	glEnableVertexAttribArray(0);
-	glViewport(0, 0, 600, 600);
+*/  
 	glClearColor(1.0f, 0.5f, 0.0f, 0.0f);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_SAMPLES, 2);
 	glEnable(GL_MULTISAMPLE);  
 
-	while(!glfwWindowShouldClose(w))
+	while(!glfwWindowShouldClose(window.getPtr()))
 	{
+		if (glfwGetKey(window.getPtr(), GLFW_KEY_F) == GLFW_PRESS) {
+			window.setFullscreen(!window.isFullscreen());
+        }
+
 		glClear(GL_COLOR_BUFFER_BIT);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glfwSwapBuffers(w);
+		glfwSwapBuffers(window.getPtr());
 		glfwPollEvents();
 	}
-	glfwTerminate();
-	logger.info("GAME","Window closed");
+	window.close();
 }
 
