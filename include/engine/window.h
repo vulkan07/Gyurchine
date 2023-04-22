@@ -16,6 +16,7 @@ public:
 	void resize(int w, int h);
 	void close();
 
+	void setClearColor(float r, float g, float b);
 	void setResizeable(bool b);
 	void setDecorated(bool b);
 	void setFullscreen(bool b);
@@ -25,6 +26,7 @@ public:
 	int getHeight() const;
 
 	GLFWwindow* getPtr() const;
-	Window(int w, int h, const char* title); //Initialize GLFW, and make context current
-	~Window(); 				//Calls close()	
+	void init(int w, int h, const char* title); //Initialize GLFW, and make context current
+	Window(); 
+	~Window();	
 };

@@ -8,7 +8,7 @@ Logger& Logger::getInstance() {
 }
 
 	
-void Logger::setLogLevel(int level) {m_logLevel = level;}
+void Logger::setLogLevel(int level) {m_logLevel = std::max(0,std::min(level,4));}
 int  Logger::getLogLevel() const {return m_logLevel;}
 
 static void getTimeString(char* buffer, size_t size, const char* format) {
