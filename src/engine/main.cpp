@@ -1,10 +1,13 @@
 #include <iostream>
 #include <vendor/glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "engine/logger.h"
 
-int main()
-{
-	std::cout << "\n\n+++[ Gyurchine started ]+++\n";
+int main() {
+	std::cout << "\n+++[ Gyurchine started ]+++\n\n";
+	
+	Logger& logger = Logger::getInstance();
+	logger.setLogLevel(Logger::DETAIL);
 
 	glfwInit();
 	GLFWwindow* w = glfwCreateWindow(1920,1080, "Gyurchine", NULL, NULL);
@@ -25,8 +28,8 @@ int main()
 		 (void*)0);
 	glEnableVertexAttribArray(0);
 	glViewport(0, 0, 600, 600);
-    glClearColor(1.0f, 0.5f, 0.0f, 0.0f);
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	glClearColor(1.0f, 0.5f, 0.0f, 0.0f);
+	glfwWindowHint(GLFW_SAMPLES, 2);
 	glEnable(GL_MULTISAMPLE);  
 
 	while(!glfwWindowShouldClose(w))
@@ -37,6 +40,6 @@ int main()
 		glfwPollEvents();
 	}
 	glfwTerminate();
-
+	logger.info("GAME","Window closed");
 }
 
