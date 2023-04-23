@@ -1,5 +1,7 @@
 #include "engine/window.h"
 
+//// Resizes window and updates OpenGL viewport
+//// Safety-checks whether window is open
 void Window::resize(int w, int h) {
 	if (m_state != 1) {
 		logger.warn("WINDOW", "Attempted to resize window while it's not initialized!");
@@ -13,6 +15,9 @@ void Window::resize(int w, int h) {
 }
 
 
+//// Sets window's background color
+//// Only works, if the render pipeline issues a clear
+//// Safety-checks whether window is open
 void Window::setClearColor(float r, float g, float b) {
 	if (m_state != 1) {
 		logger.warn("WINDOW", "Attempted to set window clear color while it's not initialized!");
@@ -22,9 +27,10 @@ void Window::setClearColor(float r, float g, float b) {
 }
 
 void Window::setResizeable(bool b) {glfwWindowHint(GLFW_RESIZABLE, b?GLFW_TRUE:GLFW_FALSE);}
-
 void Window::setDecorated(bool b) {glfwWindowHint(GLFW_DECORATED, b?GLFW_TRUE:GLFW_FALSE);}
 
+//// Fullscreens window to THE DEFAULT DISPLAY
+//// Also removing it's borders
 void Window::setFullscreen(bool b) {
 	if (b == m_fullscreen) return;
 	m_fullscreen = b;
@@ -44,14 +50,18 @@ void Window::setFullscreen(bool b) {
 	}
 }
 
-bool Window::isFullscreen() const {
-	return m_fullscreen;
-}
-
+// Getters
+bool Window::isFullscreen() const {return m_fullscreen;}
 int Window::getWidth() const {return m_width;}
 int Window::getHeight() const {return m_height;}
+//// Return actual GLFW window pointer
 GLFWwindow* Window::getPtr() const {return m_window;}
 
+
+//// Must be called once from the windows' owner
+//// Creates GLFW window, sets params like multisampling, alpha blending,
+//// And creates OpenGL context
+//// In the end, sets m_state to 1 (open)
 void Window::init(int w, int h, const char* title) {
 	m_width  = w;
 	m_height = h;
@@ -84,15 +94,14 @@ void Window::init(int w, int h, const char* title) {
 	m_state = 1;
 }
 
-Window::Window() {
-}
-Window::~Window() {
-	close();
-}
+Window::Window() {}
+
+Window::~Window() {close();}
 
 void Window::close() {
-	if (m_state == 2) return;
+	if (m_state != 1) return;
 	m_state = 2;
 	glfwTerminate();
 	logger.info("WINDOW","Window closed.");	
+
 }
