@@ -11,7 +11,7 @@ Game& Game::getInstance() { //Singleton getter
 }
 
 //// Setup static exit flag
-int Game::exitFlag;
+int Game::exitFlag = 0;
 void Game::flagExit(int sig) {
 	exitFlag = sig;
 }
@@ -32,32 +32,27 @@ void Game::init(int loglevel, bool fullscreen) {
 	// Create Window -- todo: remove baked in arguments
 	m_window.init(1920,1080,"Gyurchine");
 	m_window.setFullscreen(fullscreen);
-	m_window.setClearColor(0.f,0.f,0.f);
+	m_window.setClearColor(1.f,.5f,0.f);
 
 	// Get working directory (for file IO)
 	char cwd[1024];
         if (getcwd(cwd, sizeof(cwd)) != NULL) {
-            m_gameDir = std::string(cwd);
+			Game::m_gameDir = std::string(cwd)+"/assets/";
         } else {
 			// In case it fails, exit
 			logger.err("GAME","Cannot get working directory! ?? WTF? ??");
-			Game::flagExit();	
+			Game::flagExit(69);
 		}
-	Game::m_gameDir = std::string(cwd)+"/";
+	logger.detail("GAME",Game::getGameDir().c_str());
 
 //// TEMPORARY ////
-// Basic OpenGL code for triangle
-// To be removed once gl aspects get abstracted
-	float t[] =
-	{
-		-.5f, -.5f, 0.f,
-		0.f, .5f, 0.f,
-		.5f, -.5f, 0.f
-	};
+
+	graphics::Shader sh;
+	sh.createShader("shaders/default.glsl");
+
 	uint32_t v;
 	glGenBuffers(1, &v);
 	glBindBuffer(GL_ARRAY_BUFFER, v);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(t)*sizeof(t)/sizeof(t[0]), &t[0], GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
 	glEnableVertexAttribArray(0);
 //// TEMPORARY ////
@@ -72,24 +67,26 @@ void Game::loop() {
     float timePerFrame = 1.0 / m_targ_fps;
     float timePerUpdate = 1.0 / m_targ_ups;
 
-    float lastFrameTime = glfwGetTime();
+	float currentTime = glfwGetTime();
+    float lastFrameTime = currentTime;
     float lastUpdateTime = lastFrameTime;
 	float deltaTime = 0.0;
+	float deltaUpdateTime, deltaFrameTime;
 
 	logger.detail("GAME","Game loop started");
 	while(!glfwWindowShouldClose(m_window.getPtr())) {
-		if (Game::exitFlag) exitGame();
-		
+		//TODO ELIMINATE BUSY LOOP TODO !!!!!!!!!!!!!!!!!!!	
 		// Not polling events would make the window unresponsive,
 		// Sot it'd called even when no updates are needed
-		glfwPollEvents();
         
-		float currentTime = glfwGetTime();
-        float deltaFrameTime = currentTime - lastFrameTime;
-        float deltaUpdateTime = currentTime - lastUpdateTime;
+		currentTime = glfwGetTime();
+        deltaFrameTime = currentTime - lastFrameTime;
+        deltaUpdateTime = currentTime - lastUpdateTime;
 
 		if (deltaUpdateTime >= timePerUpdate) {
             lastUpdateTime = currentTime;
+			glfwPollEvents();
+			if (Game::exitFlag) exitGame();
 			tick(deltaUpdateTime);
         }
 
@@ -97,6 +94,11 @@ void Game::loop() {
             lastFrameTime = currentTime;
 			render(deltaUpdateTime);
         }
+
+double remaining = TARGET_FRAME_TIME - (glfwGetTime() - lastFrameTime);
+    if (remaining > 0.0) {
+        std::this_thread::sleep_for(std::chrono::duration<double>(remaining));
+    }
 	}
 	exitGame();
 }
@@ -105,6 +107,10 @@ void Game::loop() {
 //// Start of render pipeline
 // NOTE: Currently it renders a primitive triangle whilst wiggling randomly its verices 
 void Game::render(float dt) {
+	//Once there will be a background/everything will be re-rendered,
+	//can be removed for performance
+	glClear(GL_COLOR_BUFFER_BIT);
+	
 	float t[] ={
 		-.5f, -.5f, 0.f,
 		0.f, .5f, 0.f,
@@ -114,10 +120,6 @@ void Game::render(float dt) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(t)*sizeof(t)/sizeof(t[0]), &t[0], GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	//Once there will be a background/everything will be re-rendered,
-	//can be removed for performance
-	glClear(GL_COLOR_BUFFER_BIT);
-	
 	//V-sync
 	glfwSwapBuffers(m_window.getPtr());
 }
