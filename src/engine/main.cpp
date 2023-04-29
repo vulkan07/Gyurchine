@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, signalHandler);
 
 	Game game = Game::getInstance();
-	game.init(4,false);
+	game.init(4,!false);
 }
 
 // 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

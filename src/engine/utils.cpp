@@ -1,10 +1,20 @@
 #include "engine/utils.h"
+#include "engine/game.h"
 
 namespace utils {
 
 	//// Common use for simple text file read
 	//// Returns "" when file could not be read
-	std::string readFileAbs(const char* path) {
+	std::string readFile(const char* pathc, const bool relative) {
+		std::string path;
+		
+		if (relative)
+			path += Game::getGameDir() + pathc;
+		else
+			path = pathc;
+
+		Logger::getInstance().warn("FILE READ",path.c_str());
+		
 		std::ifstream f(path);
 		std::string s = "";
 		if (f) {

@@ -64,42 +64,63 @@ void Game::init(int loglevel, bool fullscreen) {
 //// Runs until the window is closed or the Game's exit flag is set
 //// FPS and UPS updates occur independently and are currently defined in 'game.h'
 void Game::loop() {
-    float timePerFrame = 1.0 / m_targ_fps;
-    float timePerUpdate = 1.0 / m_targ_ups;
+	// Compute the frame and update times
+    const std::chrono::nanoseconds FRAME_TIME{ std::chrono::seconds{ 1 } / m_targ_fps };
+    const std::chrono::nanoseconds UPDATE_TIME{ std::chrono::seconds{ 1 } / m_targ_ups };
 
-	float currentTime = glfwGetTime();
-    float lastFrameTime = currentTime;
-    float lastUpdateTime = lastFrameTime;
-	float deltaTime = 0.0;
-	float deltaUpdateTime, deltaFrameTime;
+    // Initialize the last frame and update times
+    auto last_frame_time = std::chrono::steady_clock::now();
+    auto last_update_time = std::chrono::steady_clock::now();
+    auto last_print_time = std::chrono::steady_clock::now();
+	auto current_time = std::chrono::steady_clock::now();
+	auto frame_time_elapsed = current_time - last_frame_time;
+    auto update_time_elapsed = current_time - last_update_time;
+	auto elapsed_time = current_time - last_print_time;
 
-	logger.detail("GAME","Game loop started");
-	while(!glfwWindowShouldClose(m_window.getPtr())) {
-		//TODO ELIMINATE BUSY LOOP TODO !!!!!!!!!!!!!!!!!!!	
-		// Not polling events would make the window unresponsive,
-		// Sot it'd called even when no updates are needed
+	// Initialize FPS and UPS counters
+	int fps = 0, ups = 0;
+
+    // Game loop
+	while(!glfwWindowShouldClose(m_window.getPtr()) && !Game::exitFlag) {
+        // Compute the elapsed time since the last frame and update times
+        current_time = std::chrono::steady_clock::now();
+        frame_time_elapsed = current_time - last_frame_time;
+        update_time_elapsed = current_time - last_update_time;
+
+		glfwPollEvents();
+		
+		// Print FPS and UPS every second
+		elapsed_time = current_time - last_print_time;
+		if (elapsed_time >= std::chrono::seconds{ 2 }) {
+			std::cout << CON_GRAY <<  fps/2 << " FPS    " << ups/2 << " UPS"<< std::endl;
+			fps = 0;
+			ups = 0;
+			last_print_time = current_time;
+		}
+
+        // Render the frame if it's time
+        if (frame_time_elapsed >= FRAME_TIME) {
+            render(1);
+			last_frame_time = current_time;
+			fps++;
+        }
+
+        // Update the game state if it's time
+        if (update_time_elapsed >= UPDATE_TIME) {
+			tick(1);
+            last_update_time = current_time;
+			ups++;
+        }
+		
         
-		currentTime = glfwGetTime();
-        deltaFrameTime = currentTime - lastFrameTime;
-        deltaUpdateTime = currentTime - lastUpdateTime;
-
-		if (deltaUpdateTime >= timePerUpdate) {
-            lastUpdateTime = currentTime;
-			glfwPollEvents();
-			if (Game::exitFlag) exitGame();
-			tick(deltaUpdateTime);
+		// Sleep to avoid busy waiting
+        const auto sleep_time = std::min(FRAME_TIME - frame_time_elapsed, UPDATE_TIME - update_time_elapsed);
+        if (sleep_time > std::chrono::nanoseconds::zero()) {
+            std::this_thread::sleep_for(sleep_time);
         }
 
-        if (deltaFrameTime >= timePerFrame) {
-            lastFrameTime = currentTime;
-			render(deltaUpdateTime);
-        }
-
-double remaining = TARGET_FRAME_TIME - (glfwGetTime() - lastFrameTime);
-    if (remaining > 0.0) {
-        std::this_thread::sleep_for(std::chrono::duration<double>(remaining));
+		
     }
-	}
 	exitGame();
 }
 
@@ -115,10 +136,10 @@ void Game::render(float dt) {
 		-.5f, -.5f, 0.f,
 		0.f, .5f, 0.f,
 		.5f, -.5f, 0.f};
-	t[rand()%8]+=((rand()%4)-2)*0.001f; //Wiggling vertices
+	t[rand()%8]+=((rand()%4)-2)*0.01f; //Wiggling vertices
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(t)*sizeof(t)/sizeof(t[0]), &t[0], GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+//	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	//V-sync
 	glfwSwapBuffers(m_window.getPtr());

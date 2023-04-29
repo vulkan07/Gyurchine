@@ -1,10 +1,12 @@
 #pragma one
-#include <vendor/glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include "engine/logger.h"
 #include "engine/window.h"
 #include "engine/utils.h"
+#include "engine/graphics/shader.h"
+
+#include <chrono>
+#include <thread>
 
 #ifdef __linux__
 	#include <unistd.h>
@@ -17,8 +19,8 @@ private:
 	Window m_window;
 
 	// Game's variables
-	int m_targ_fps = 60;
-	int m_targ_ups = 60;
+	int m_targ_fps = 30;
+	int m_targ_ups = 30;
 	
 	// Specials variables
 	static std::string m_gameDir; // Fulls string path to the executable
